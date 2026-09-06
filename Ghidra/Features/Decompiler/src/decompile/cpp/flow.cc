@@ -810,7 +810,8 @@ void FlowInfo::generateOps(void)
       }
     }
     
-    checkContainedCall();	// Check for PIC constructions
+    if (glb->contained_call_mode == CONTAINED_CALL_HEURISTIC)
+      checkContainedCall();	// Check for PIC constructions
     checkMultistageJumptables();
     for(int4 i=0;i<notreached.size();++i)
       tablelist.push_back(notreached[i]);

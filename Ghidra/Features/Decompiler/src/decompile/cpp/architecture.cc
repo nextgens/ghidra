@@ -47,6 +47,7 @@ AttributeId ATTRIB_REGISTER = AttributeId("register",110);
 AttributeId ATTRIB_REVERSEJUSTIFY = AttributeId("reversejustify",111);
 AttributeId ATTRIB_SIGNEXT = AttributeId("signext",112);
 AttributeId ATTRIB_STYLE = AttributeId("style",113);
+AttributeId ATTRIB_MODE = AttributeId("mode",160);
 
 ElementId ELEM_ADDRESS_SHIFT_AMOUNT = ElementId("address_shift_amount",130);
 ElementId ELEM_AGGRESSIVETRIM = ElementId("aggressivetrim",131);
@@ -78,6 +79,7 @@ ElementId ELEM_SPACEBASE = ElementId("spacebase",156);
 ElementId ELEM_SPECEXTENSIONS = ElementId("specextensions",157);
 ElementId ELEM_STACKPOINTER = ElementId("stackpointer",158);
 ElementId ELEM_VOLATILE = ElementId("volatile",159);
+ElementId ELEM_CONTAINEDCALLBEHAVIOR = ElementId("containedcallbehavior",292);
 
 /// This builds a list of just the ArchitectureCapability extensions
 void ArchitectureCapability::initialize(void)
@@ -154,6 +156,7 @@ Architecture::Architecture(void)
   resetDefaultsInternal();
   min_funcsymbol_size = 1;
   aggressive_ext_trim = false;
+  contained_call_mode = CONTAINED_CALL_HEURISTIC;
   funcptr_align = 0;
   defaultfp = (ProtoModel *)0;
   defaultReturnAddr.space = (AddrSpace *)0;
@@ -1133,6 +1136,23 @@ void Architecture::decodeAggressiveTrim(Decoder &decoder)
   decoder.closeElement(elemId);
 }
 
+/// Configure, based on the \<containedcallbehavior> element, how the decompiler
+/// treats CALL instructions whose targets are contained within the current function.
+/// \param decoder is the stream decoder
+void Architecture::decodeContainedCallBehavior(Decoder &decoder)
+
+{
+  uint4 elemId = decoder.openElement(ELEM_CONTAINEDCALLBEHAVIOR);
+  string mode = decoder.readString(ATTRIB_MODE);
+  decoder.closeElement(elemId);
+  if (mode == "heuristic")
+    contained_call_mode = CONTAINED_CALL_HEURISTIC;
+  else if (mode == "preserve")
+    contained_call_mode = CONTAINED_CALL_PRESERVE;
+  else
+    throw LowlevelError("Unknown containedcallbehavior mode: " + mode);
+}
+
 /// Clone the named ProtoModel, attaching it to another name.
 /// \param aliasName is the new name to assign
 /// \param parentName is the name of the parent model
@@ -1266,6 +1286,8 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
       decodePreferSplit(decoder);
     else if (subId == ELEM_AGGRESSIVETRIM)
       decodeAggressiveTrim(decoder);
+    else if (subId == ELEM_CONTAINEDCALLBEHAVIOR)
+      decodeContainedCallBehavior(decoder);
     else if (subId == ELEM_DATA_ORGANIZATION)
       types->decodeDataOrganization(decoder);
     else if (subId == ELEM_ENUM)
@@ -1433,6 +1455,7 @@ void Architecture::resetDefaultsInternal(void)
   split_datatype_config = OptionSplitDatatypes::option_struct | OptionSplitDatatypes::option_array
       | OptionSplitDatatypes::option_pointer;
   max_jumptable_size = 1024;
+  contained_call_mode = CONTAINED_CALL_HEURISTIC;
 }
 
 /// Reset options that can be modified by the OptionDatabase. This includes

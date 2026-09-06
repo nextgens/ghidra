@@ -618,7 +618,48 @@ operation. Currently there is no toggle for  zero-extensions.
 </para>
 <example>
 <programlisting>
-  &lt;aggressivetrim signext="true"/&gt;
+   &lt;aggressivetrim signext="true"/&gt;
+</programlisting>
+</example>
+</sect2>
+<sect2>
+<title>&lt;containedcallbehavior&gt;</title>
+<para>
+<table xml:id="containedcall.htmltable" frame="above" width="80%" rules="groups">
+<col width="23%"/>
+<col width="15%"/>
+<col width="61%"/>
+<thead>
+<tr>
+  <td align='center' colspan='2'><emphasis role="bold">Attributes and Children</emphasis></td>
+  <td/>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td align='right'>mode</td>
+  <td></td>
+  <td>(Optional) <emphasis>heuristic</emphasis> or <emphasis>preserve</emphasis></td>
+</tr>
+</tbody>
+</table>
+</para>
+<para>
+This tag controls the treatment of CALL instructions whose destinations are contained within
+the current function. The default behavior (<emphasis>heuristic</emphasis>, which is the implicit
+default if this tag is absent) permits the decompiler's contained-call/PIC heuristic, which
+may convert a contained CALL into a BRANCH when it interprets the CALL as a possible position-independent
+code construction.
+</para>
+<para>
+Setting <emphasis>mode</emphasis> to <emphasis>preserve</emphasis> treats contained CALLs as
+legitimate calls and suppresses that conversion. This is appropriate for architectures or
+language specifications where CALL targets within a flat function body represent genuine
+returning calls rather than a PIC construction.
+</para>
+<example>
+<programlisting>
+   &lt;containedcallbehavior mode="preserve"/&gt;
 </programlisting>
 </example>
 </sect2>

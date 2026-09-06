@@ -63,6 +63,14 @@ public:
 
 class Architecture;
 
+/// \brief Policy for how the decompiler handles CALL instructions whose targets
+/// are contained within the current function's address range.
+enum ContainedCallMode {
+  CONTAINED_CALL_HEURISTIC,	///< Apply the contained-call/PIC heuristic (default)
+  CONTAINED_CALL_PRESERVE	///< Preserve contained CALLs as legitimate calls
+};
+
+extern AttributeId ATTRIB_MODE;		///< Marshaling attribute "mode"
 extern AttributeId ATTRIB_ADDRESS;	///< Marshaling attribute "address"
 extern AttributeId ATTRIB_ADJUSTVMA;	///< Marshaling attribute "adjustvma"
 extern AttributeId ATTRIB_ENABLE;	///< Marshaling attribute "enable"
@@ -106,6 +114,7 @@ extern ElementId ELEM_SPACEBASE;		///< Marshaling element \<spacebase>
 extern ElementId ELEM_SPECEXTENSIONS;		///< Marshaling element \<specextensions>
 extern ElementId ELEM_STACKPOINTER;		///< Marshaling element \<stackpointer>
 extern ElementId ELEM_VOLATILE;			///< Marshaling element \<volatile>
+extern ElementId ELEM_CONTAINEDCALLBEHAVIOR;	///< Marshaling element \<containedcallbehavior>
 
 /// \brief Abstract extension point for building Architecture objects
 ///
@@ -186,6 +195,7 @@ public:
   uint4 max_baddata;		///< Maximum number of bad instructions that one function can encounter
   int4 alias_block_level;	///< Aliases blocked by 0=none, 1=struct, 2=array, 3=all
   uint4 split_datatype_config;	///< Toggle for data-types splitting: Bit 0=structs, 1=arrays, 2=pointers
+  ContainedCallMode contained_call_mode; ///< Policy for contained CALL instructions
   vector<Rule *> extra_pool_rules; ///< Extra rules that go in the main pool (cpu specific, experimental)
 
   Database *symboltab;		///< Memory map of global variables and functions
@@ -376,6 +386,7 @@ protected:
   void decodeNoHighPtr(Decoder &decoder);		///< Apply memory alias configuration
   void decodePreferSplit(Decoder &decoder);		///< Designate registers to be split
   void decodeAggressiveTrim(Decoder &decoder);		///< Designate how to trim extension p-code ops
+  void decodeContainedCallBehavior(Decoder &decoder);	///< Designate contained call policy
 };
 
 /// \brief A resolver for segmented architectures
